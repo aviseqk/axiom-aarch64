@@ -111,5 +111,40 @@ _start:
 	msr cptr_el3, x0
 	isb
 
-1:
-	b 1b
+	/* explicitly set the spsel to be 1 to choose SP_EL3 but qemu currently by default does that.
+	NOTE: if want to explicity set it to 1, add the following instructions and post that add the __stack_top assignment to sp register 
+	msr spsel, #1
+	isb
+	ldr x0, =__stack_top
+	mov sp, x0
+	*/
+
+	// copy .data from its load address in BOOTROM to its runtime address in SECURE_RAM
+	ldr x0, =__data_load
+	ldr x1, =__data_start
+	ldr x2, =__data_end
+
+copy_data_to_runtime:
+	cmp x1, x2
+	b.hs zero_bss_prep
+
+	ldr x3, [x0], #8
+	str x3, [x1], #8
+
+	b copy_data_to_runtime
+
+// zero bss section of SECURE_RAM by using linker-provided symbols
+zero_bss_prep:
+	ldr x0, =__bss_start
+	ldr x1, =__bss_end
+
+zero_bss:
+	cmp x0, x1
+	b.hs end_zero_bss
+
+	str xzr, [x0], #8
+
+	b zero_bss
+
+end_zero_bss:
+	b .

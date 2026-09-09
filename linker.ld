@@ -30,7 +30,29 @@ SECTIONS
 		__vector_table_end = .;
 	} > BOOTROM
 
+	.rodata : ALIGN(8)
+	{
+		*(.rodata*)
+	} > BOOTROM
+
 	. = AXIOM_EARLY_SECURE_RAM_BASE;	/* move to secure RAM for mutable data/stack */
+
+	.data : ALIGN(8)
+	{
+		__data_start = .;
+		*(.data*)
+		__data_end = .;
+	} > SECURE_RAM AT>BOOTROM
+
+	__data_load = LOADADDR(.data);
+
+	.bss (NOLOAD): ALIGN(8)
+	{
+		__bss_start = .;
+		*(.bss*)
+		*(COMMON)
+		__bss_end = .;
+	} > SECURE_RAM
 
 	.stack (NOLOAD): ALIGN(16)
 	{
