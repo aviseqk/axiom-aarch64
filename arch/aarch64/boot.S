@@ -87,5 +87,29 @@ _start:
 	msr daifset, #0xf
 	isb
 
+	// now the desired EL3 CPU Control State is set, and next step is establishing EL3's own execution environment. This 
+	// step is congruent to what BL1 in TF-A does via setup_el3_execution_context macro in bl1_entrypoint path. 
+	// and this is needed, because whenever code runs at EL3, and in Root Context, there are few EL3 registers that need be
+	// configured while any code runs at EL3
+
+	/* 
+	* now the desired EL3 CPU Control State is set, and next step is establishing EL3's own execution environment. 
+	*
+	* This step is congruent to what BL1 in TF-A does via setup_el3_execution_context macro in bl1_entrypoint path. 
+	* and this is needed, because whenever code runs at EL3, and in Root Context, there are few EL3 registers that need be
+	* configured while any code runs at EL3
+	*
+	* The architectural policy of my decisions and reference against TF-A BL1's decisions for the EL3 execution
+	* environment configuration is documented in:
+	* docs/el3-execution-environment-decisions.md
+	*/
+
+	mrs x0, cptr_el3
+	orr x0, x0, #CPTR_EZ_BIT
+	orr x0, x0, #CPTR_ESM_BIT
+	bic x0, x0, #CPTR_TFP_BIT
+	msr cptr_el3, x0
+	isb
+
 1:
 	b 1b
