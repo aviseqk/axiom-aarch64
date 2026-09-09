@@ -147,4 +147,7 @@ zero_bss:
 	b zero_bss
 
 end_zero_bss:
-	b .
+	bl axiom_main
+
+1:	
+	b 1b
