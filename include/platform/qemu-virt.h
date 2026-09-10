@@ -1,5 +1,8 @@
 /* QEMU virt machine hardware facts about underlying physical memory */
 
+#ifndef AXIOM_PLATFORM_QEMU_VIRT_H
+#define AXIOM_PLATFORM_QEMU_VIRT_H
+
 /* Flash0 - 64MiB - virt.flash0 device in QEMU */
 #define QEMU_FLASH_0_BASE			0x00000000
 #define QEMU_FLASH_0_SIZE			0x04000000
@@ -17,4 +20,9 @@
 #define QEMU_DRAM_SIZE				0x08000000
 
 #define QEMU_GIC_BASE				0x08000000
-#define QEMU_UART_BASE				0x09000000	/* pl011 */
+
+#define QEMU_UART_BASE				0x09000000UL	/* pl011 */
+#define QEMU_UART_CLOCK_HZ			24000000U	/* QEMU virt's PL011 is connected to a fixed 24MHz clock as documented in the machine's dts */
+#define QEMU_UART_BAUD_RATE			115200U
+
+#endif
