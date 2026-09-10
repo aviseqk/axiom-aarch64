@@ -1,27 +1,75 @@
-.PHONY: drivers misc all
+CROSS_COMPILE := aarch64-none-elf-
 
-# TODO: Revise and Arrange this Makefile, like make axiom.bin, axiom.elf etc as the primary build targets, define make variables, add separate build/ or out/ directory, etc
-all:	drivers misc
-	#aarch64-none-elf-as -o boot.o arch/aarch64/boot.S - replace -as tool with -gcc -c because now our .S includes a include directive for a .h header file
-	aarch64-none-elf-gcc -Iinclude -c arch/aarch64/boot.S -o boot.o
-	aarch64-none-elf-as -o level1_exceptions.o arch/aarch64/level1_exceptions.S
-	aarch64-none-elf-as -o cpu.o arch/aarch64/cpu.S
-# include our C source file in the Make process
-	aarch64-none-elf-gcc -ffreestanding -fno-builtin -Iinclude -c arch/aarch64/axiom_main.c -o axiom_main.o
-# preprocess the linker script first, as it has include directives, and ld tool doesnot necessarily understands the #include natively
-	aarch64-none-elf-gcc -E -P -x c -Iinclude linker.ld -o linker.i
+LD	:= $(CROSS_COMPILE)ld
+AS	:= $(CROSS_COMPILE)as
+CC	:= $(CROSS_COMPILE)gcc
+OBJCOPY := $(CROSS_COMPILE)objcopy
 
-	aarch64-none-elf-ld -T linker.i -o axiom.elf boot.o level1_exceptions.o axiom_main.o cpu.o \
-			console.o pl011-uart.o
 
-	aarch64-none-elf-objcopy -O binary axiom.elf axiom.bin
+CPPFLAGS := -Iinclude
+CFLAGS := -ffreestanding -fno-builtin
+ASFLAGS :=
+LDFLAGS :=
 
-drivers:
-	aarch64-none-elf-gcc -ffreestanding -fno-builtin -Iinclude -c drivers/pl011-uart/pl011-uart.c -o pl011-uart.o 
+BUILD := build
 
-misc: drivers
-	aarch64-none-elf-gcc -ffreestanding -fno-builtin -Iinclude -c runtime/console.c -o console.o
+OBJS := $(BUILD)/boot.o \
+	$(BUILD)/level1_exceptions.o \
+	$(BUILD)/cpu.o \
+	$(BUILD)/axiom_main.o \
+	$(BUILD)/console.o \
+	$(BUILD)/pl011-uart.o
 
+LINKER_SCRIPT := linker.ld
+LINKER_SCRIPT_DEPS := \
+		      include/platform/axiom-memory.h \
+		      include/platform/qemu-virt.h
+
+AXIOM_ELF	:= $(BUILD)/axiom.elf
+AXIOM_BINARY	:= $(BUILD)/axiom.bin
+
+.PHONY: all clean
+
+all : $(AXIOM_BINARY)
+	@echo "[BUILD]	$<"
+
+$(AXIOM_BINARY): $(AXIOM_ELF)
+	@echo "[OBJCOPY] $@"
+	$(OBJCOPY) -O binary $< $@
+
+$(AXIOM_ELF): $(OBJS) $(BUILD)/linker.i
+	@echo "[LD]	$@"
+	$(LD) $(LDFLAGS) -T $(BUILD)/linker.i -o $@ $(OBJS)
+
+# preprocess the linker script so that macros from platform and memory headers are resolved
+$(BUILD)/linker.i: $(LINKER_SCRIPT) $(LINKER_SCRIPT_DEPS)
+	@echo "[CPP]	linker.ld"
+	$(CC) -E -P -x c $(CPPFLAGS) $< -o $@
+
+$(BUILD)/boot.o: arch/aarch64/boot.S
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+$(BUILD)/level1_exceptions.o: arch/aarch64/level1_exceptions.S
+	@echo "[AS]	$<"
+	$(AS) $(ASFLAGS) $< -o $@
+
+$(BUILD)/cpu.o: arch/aarch64/cpu.S
+	@echo "[AS]	$<"
+	$(AS) $(ASFLAGS) $< -o $@
+
+$(BUILD)/axiom_main.o: arch/aarch64/axiom_main.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/console.o: runtime/console.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/pl011-uart.o: drivers/pl011-uart/pl011-uart.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f axiom.elf axiom.bin boot.o level1_exceptions.o axiom_main.o cpu.o console.o pl011-uart.o linker.i
+	@echo "[CLEAN]	build"
+	rm -rf $(BUILD)/*
