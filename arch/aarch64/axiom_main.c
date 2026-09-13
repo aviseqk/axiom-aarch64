@@ -11,7 +11,7 @@ void axiom_main(void)
 
 	console_init();
 
-	console_puts("Axiom is online now!");
+	console_puts("Axiom is online now!\n");
 
 	unsigned long el = axiom_read_current_el();
 

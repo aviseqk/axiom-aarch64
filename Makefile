@@ -83,8 +83,11 @@ EL2_ELF		:= $(BUILD)/el2.elf
 EL2_BINARY		:= $(BUILD)/el2.bin
 EL2_LINKER_SCRIPT	:= linker.el2.ld
 
+# NOTE: added the $(BUILD)/console.o $(BUILD)/pl011-uart.o to add links to the console and uart driver so that it could be used to print logs
 EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
-		   $(BUILD)/el2.o
+		   $(BUILD)/el2.o \
+		   $(BUILD)/console.o \
+		   $(BUILD)/pl011-uart.o
 
 # NOTE: right now, EL2 elf is being explicitly built as a target to be then manually loaded via qemu at designated address in memory
 
