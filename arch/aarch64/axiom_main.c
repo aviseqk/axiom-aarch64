@@ -11,13 +11,13 @@ void axiom_main(void)
 
 	console_init();
 
-	console_puts("Axiom is online now!");
+	console_puts("Axiom is online now!\n");
 
 	unsigned long el = axiom_read_current_el();
 
 	//volatile unsigned long marker = 0x123456789ABCDEF0UL;
 	volatile unsigned long marker = el;
 
-    while (1) {
-    }
+    //while (1) {
+    //}
 }

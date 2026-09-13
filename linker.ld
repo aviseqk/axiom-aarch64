@@ -3,19 +3,19 @@
 MEMORY
 {
 	BOOTROM (rx): 
-		ORIGIN = AXIOM_BOOTROM_BASE,
-		LENGTH = AXIOM_BOOTROM_SIZE
+		ORIGIN = AXIOM_EL3_BOOTROM_BASE,
+		LENGTH = AXIOM_EL3_BOOTROM_SIZE
 
 	SECURE_RAM( rwx):
-		ORIGIN = AXIOM_EARLY_SECURE_RAM_BASE, 
-		LENGTH = AXIOM_EARLY_SECURE_RAM_SIZE
+		ORIGIN = AXIOM_EL3_EARLY_SECURE_RAM_BASE, 
+		LENGTH = AXIOM_EL3_EARLY_SECURE_RAM_SIZE
 }
 
 ENTRY(_start)
 
 SECTIONS
 {
-	. = AXIOM_BOOTROM_BASE;
+	. = AXIOM_EL3_BOOTROM_BASE;
 
 	.text : ALIGN(4)
 	{
@@ -35,7 +35,7 @@ SECTIONS
 		*(.rodata*)
 	} > BOOTROM
 
-	. = AXIOM_EARLY_SECURE_RAM_BASE;	/* move to secure RAM for mutable data/stack */
+	. = AXIOM_EL3_EARLY_SECURE_RAM_BASE;	/* move to secure RAM for mutable data/stack */
 
 	.data : ALIGN(8)
 	{
@@ -62,7 +62,7 @@ SECTIONS
 	} > SECURE_RAM
 
 	/* Link-time safety checks */
-	ASSERT(__stack_top <= AXIOM_EARLY_SECURE_RAM_BASE + AXIOM_EARLY_SECURE_RAM_SIZE,
+	ASSERT(__stack_top <= AXIOM_EL3_EARLY_SECURE_RAM_BASE + AXIOM_EL3_EARLY_SECURE_RAM_SIZE,
 		"Axiom secure RAM overflow")
 
 	ASSERT(__vector_table_start % 2048 == 0,
