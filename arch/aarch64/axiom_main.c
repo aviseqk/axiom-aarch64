@@ -18,6 +18,6 @@ void axiom_main(void)
 	//volatile unsigned long marker = 0x123456789ABCDEF0UL;
 	volatile unsigned long marker = el;
 
-    while (1) {
-    }
+    //while (1) {
+    //}
 }
