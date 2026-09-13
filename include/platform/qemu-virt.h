@@ -19,6 +19,12 @@
 #define QEMU_DRAM_BASE				0x40000000
 #define QEMU_DRAM_SIZE				0x08000000
 
+
+// ISSUE: there is a memory region blocked by QEMU for its dtb load when baremetal images are loaded, so acccounting for that TODO: resolve this
+#define QEMU_VIRT_DTB_LOAD_BASE		0x40000000
+#define QEMU_VIRT_DTB_LOAD_END			0x40100000
+
+
 #define QEMU_GIC_BASE				0x08000000
 
 #define QEMU_UART_BASE				0x09000000UL	/* pl011 */
