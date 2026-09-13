@@ -1,4 +1,6 @@
 #include "arch/el3.h"
+#include "arch/el2.h"
+#include "el2-build-layout.h"
 
 /* Helper macro to load arbitrary values into 64-bit registers which generates the mov/movk combinations. 
 because we cannot load a general arbitraty 64 bit constant value using a single instruction in aarch64
@@ -9,6 +11,10 @@ movz establishes the initial value and movk replace one 16-bit portion without d
     movk \reg, ((\value >> 32) & 0xffff), lsl #32
     movk \reg, ((\value >> 48) & 0xffff), lsl #48
 .endm
+
+.section .rodata
+first_early_boot_msg:
+    .asciz "[AXIOM] : [EL3]: _start being called\n"
 
 .section .text.boot
 .globl _start
@@ -28,10 +34,17 @@ Initial Firmware Init Sequence
 */
 
 _start:
+
 	// prepare the EL3 stack
 	ldr x0, =__stack_top
 	mov sp, x0
+	
+	// TODO: maybe remove or keep, but this is a small test to check console function i.e. C functions being called from ASM source
+	bl console_init		// NOTE: we discovered that a basic running UART support is there even though we dont do console_init, console_putc was transmitting data onto the UART
 
+	ldr x0, =first_early_boot_msg
+	bl console_puts
+	
 	// read and observe the current CPU State
 	mrs x1, SCTLR_EL3
 	mrs x2, SCR_EL3
@@ -112,7 +125,7 @@ _start:
 	isb
 
 	/* explicitly set the spsel to be 1 to choose SP_EL3 but qemu currently by default does that.
-	NOTE: if want to explicity set it to 1, add the following instructions and post that add the __stack_top assignment to sp register 
+	* NOTE: if want to explicity set it to 1, add the following instructions and post that add the __stack_top assignment to sp register 
 	msr spsel, #1
 	isb
 	ldr x0, =__stack_top
@@ -149,5 +162,50 @@ zero_bss:
 end_zero_bss:
 	bl axiom_main
 
+	bl axiom_enter_el2
+
 1:	
 	b 1b
+
+/* prepare the exception return and context for CPU to jump to EL2 and do ERET */
+axiom_enter_el2:
+	// prepare EL2's stack
+	ldr x0, =AXIOM_EL2_STACK_TOP
+	msr SP_EL2, x0
+
+	// program the SCR_EL3, configuring the execution environment at lower EL
+	mrs x0, SCR_EL3
+	orr x0, x0, #SCR_NS_BIT
+	orr x0, x0, #SCR_HCE_BIT
+	msr SCR_EL3, x0
+	isb
+
+	// program the EL2's execution environment i.e. SCTLR_EL2
+	mov_imm x0, (SCTLR_EL2_RESET_VAL & ~(SCTLR_EE_BIT | SCTLR_WXN_BIT \
+			| SCTLR_I_BIT | SCTLR_NAA_BIT | SCTLR_C_BIT \
+			| SCTLR_A_BIT | SCTLR_M_BIT))
+	orr x0, x0, #SCTLR_SA_BIT
+	msr SCTLR_EL2, x0
+	isb
+
+	// prepare the EL2 return state, SPSR_EL3
+	mov_imm x0, SPSR_EL3_M_EL2h
+
+	orr x0, x0, #SPSR_EL3_D_BIT
+	orr x0, x0, #SPSR_EL3_A_BIT
+	orr x0, x0, #SPSR_EL3_I_BIT
+	orr x0, x0, #SPSR_EL3_F_BIT
+
+	msr SPSR_EL3, x0
+
+	// setup VBAR_EL2 for EL2
+	ldr x0, =AXIOM_EL2_VECTOR_BASE
+	msr VBAR_EL2, x0
+	isb
+
+	// assign the entrypoint address of EL2
+	ldr x0, =AXIOM_EL2_ENTRY
+	msr ELR_EL3, x0
+
+	// Transition
+	eret

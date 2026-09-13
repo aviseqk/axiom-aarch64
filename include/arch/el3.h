@@ -53,3 +53,12 @@
 #define CPTR_EZ_BIT		(1ULL << 8)
 #define CPTR_TFP_BIT		(1ULL << 10)
 #define CPTR_ESM_BIT		(1ULL << 12)
+
+
+
+/* SPSR_EL3 definitions */
+#define SPSR_EL3_M_EL2h		(0x9)
+#define SPSR_EL3_D_BIT		(1ULL << 9)
+#define SPSR_EL3_A_BIT		(1ULL << 8)
+#define SPSR_EL3_I_BIT		(1ULL << 7)
+#define SPSR_EL3_F_BIT		(1ULL << 6)
