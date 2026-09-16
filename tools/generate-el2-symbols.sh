@@ -3,7 +3,7 @@
 set -e
 
 ELF="$1"
-HEADER="include/el2-build-layout.h"
+HEADER="include/generated/el2-build-layout.h"
 
 REQUIRED_SYMBOLS=(
 	"__axiom_el2_entry"
