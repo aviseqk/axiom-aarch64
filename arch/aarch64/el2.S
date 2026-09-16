@@ -1,7 +1,27 @@
-.section .rodata
+section .rodata
 first_el2_jump_msg:
     .asciz "[AXIOM] : [EL2]: EL3 eret into EL2\n"
 
+.section .rodata
+before:
+    .asciz "[AXIOM] : [EL2]: before\n"
+
+.section .rodata
+after:
+    .asciz "[AXIOM] : [EL2]: after\n"
+
+.macro udf_inst_exception_test_hook
+	// TEST: the following 5 instructions are there as a part of exception route testing only
+
+	ldr x0, =before
+	bl console_puts
+
+	udf #0
+	
+	ldr x0, =after
+	bl console_puts	
+
+.endm
 
 .section .text.boot
 .globl _el2_start
@@ -24,6 +44,8 @@ end_zero_bss:
 
 	ldr x0, =first_el2_jump_msg
 	bl console_puts
+
+	udf_inst_exception_test_hook
 
 	bl el2_main
 	
