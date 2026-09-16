@@ -2,6 +2,10 @@
 
 #include "qemu-virt.h"
 
+/* NOTE: Temporarily, I am doing static DRAM partitioning, until Axiom has a image loader at EL2 or EL3, 
+ * each execution level gets an explicitly decided non-overlapping memory region */
+
+
 /* EL3 firmware memory
  * 128KiB firmware allocation
  * NOTE: Axiom is not reserving complete bootROM for its usage at level 1/EL3 
@@ -16,9 +20,10 @@
 #define AXIOM_PLATFORM_DRAM_BASE			QEMU_DRAM_BASE
 #define AXIOM_PLATFORM_DRAM_SIZE			QEMU_DRAM_SIZE
 
-//TODO: remove later when we actually design Stack, right now just to avoid symbol-unavailability error from linker script
+//TODO: redesign later when we actually design Stack for different ELs, when each ELs stop being a basic flat-addressed bare-metal targets with barely any recursion and logic
 #define AXIOM_STACK_SIZE		0x00004000
 #define AXIOM_EL2_STACK_SIZE		0x00004000
+#define AXIOM_EL1_STACK_SIZE		0x00004000
 
 
 /* EL2 firmware memory
@@ -33,5 +38,10 @@
  *  */
 #define AXIOM_EL2_BASE		QEMU_VIRT_DTB_LOAD_END	
 #define AXIOM_EL2_SIZE		0x00400000
+
+
+/* EL1 memory - 4MiB region for EL1 */
+#define AXIOM_EL1_BASE		(AXIOM_EL2_BASE + AXIOM_EL2_SIZE)
+#define AXIOM_EL1_SIZE		0x00400000
 
 // rest of DRAM left available for future use 
