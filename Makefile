@@ -18,7 +18,7 @@ OBJS := $(BUILD)/boot.o \
 	$(BUILD)/cpu.o \
 	$(BUILD)/axiom_main.o \
 	$(BUILD)/console.o \
-	$(BUILD)/pl011-uart.o
+	$(BUILD)/pl011-uart.o 
 
 EL3_LINKER_SCRIPT := linker.ld
 LINKER_SCRIPT_DEPS := \
@@ -28,7 +28,7 @@ LINKER_SCRIPT_DEPS := \
 AXIOM_ELF	:= $(BUILD)/axiom.elf
 AXIOM_BINARY	:= $(BUILD)/axiom.bin
 
-EL2_EL3_HANDOFF_HEADER	:= include/el2-build-layout.h
+EL2_EL3_HANDOFF_HEADER	:= include/generated/el2-build-layout.h
 EL2_MAKE_TARGET		:= el2
 
 .PHONY: all clean
@@ -73,13 +73,15 @@ $(BUILD)/pl011-uart.o: drivers/pl011-uart/pl011-uart.c
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
+
+
 clean: el2_clean
 	@echo "[CLEAN]	build"
 	rm -rf $(BUILD)/*
 
 # EL2 Build Steps
 
-EL2_ELF		:= $(BUILD)/el2.elf
+EL2_ELF			:= $(BUILD)/el2.elf
 EL2_BINARY		:= $(BUILD)/el2.bin
 EL2_LINKER_SCRIPT	:= linker.el2.ld
 
@@ -87,7 +89,8 @@ EL2_LINKER_SCRIPT	:= linker.el2.ld
 EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
 		   $(BUILD)/el2.o \
 		   $(BUILD)/console.o \
-		   $(BUILD)/pl011-uart.o
+		   $(BUILD)/pl011-uart.o \
+		   $(BUILD)/el2_main.o \
 
 # NOTE: right now, EL2 elf is being explicitly built as a target to be then manually loaded via qemu at designated address in memory
 
@@ -111,13 +114,17 @@ $(BUILD)/linker.el2.i: $(EL2_LINKER_SCRIPT) $(LINKER_SCRIPT_DEPS)
 	@echo "[CPP]	linker.el2.ld"
 	$(CC) -E -P -x c $(CPPFLAGS) $< -o $@
 
+$(BUILD)/el2_main.o: arch/aarch64/el2_main.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
 $(BUILD)/el2.o: arch/aarch64/el2.S
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD)/level2_exceptions.o: arch/aarch64/level2_exceptions.S
-	@echo "[AS]	$<"
-	$(AS) $(ASFLAGS) $< -o $@
+$(BUILD)/level2_exceptions.o: arch/aarch64/level2_exceptions.S	
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) -c $< -o $@
 
 el2_clean:
 	@echo "[CLEAN] build - EL2"
