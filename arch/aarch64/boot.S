@@ -1,6 +1,6 @@
 #include "arch/el3.h"
 #include "arch/el2.h"
-#include "el2-build-layout.h"
+#include "generated/el2-build-layout.h"
 
 /* Helper macro to load arbitrary values into 64-bit registers which generates the mov/movk combinations. 
 because we cannot load a general arbitraty 64 bit constant value using a single instruction in aarch64
