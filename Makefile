@@ -91,6 +91,9 @@ EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
 		   $(BUILD)/console.o \
 		   $(BUILD)/pl011-uart.o \
 		   $(BUILD)/el2_main.o \
+		   $(BUILD)/el2_exceptions.o
+
+EL2_CTX_C_ASM_OFFS_HEADER	:=	generated/axiom-exception-ctx-offset.h
 
 # NOTE: right now, EL2 elf is being explicitly built as a target to be then manually loaded via qemu at designated address in memory
 
@@ -122,10 +125,16 @@ $(BUILD)/el2.o: arch/aarch64/el2.S
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD)/level2_exceptions.o: arch/aarch64/level2_exceptions.S	
+$(BUILD)/level2_exceptions.o: arch/aarch64/level2_exceptions.S $(EL2_CTX_C_ASM_OFFS_HEADER)
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
+$(BUILD)/el2_exceptions.o: runtime/el2_exceptions.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(EL2_CTX_C_ASM_OFFS_HEADER): 
+	./tools/generate-axiom-exception-ctx-offsets.o
 el2_clean:
 	@echo "[CLEAN] build - EL2"
-	rm -rf $(BUILD)/linker.el2.i $(BUILD)/el2* level2_exceptions.o $(EL2_EL3_HANDOFF_HEADER)
+	rm -rf $(BUILD)/linker.el2.i $(BUILD)/el2* level2_exceptions.o $(EL2_EL3_HANDOFF_HEADER) $(EL2_CTX_C_ASM_OFFS_HEADER)

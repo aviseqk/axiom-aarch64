@@ -1,4 +1,4 @@
-section .rodata
+.section .rodata
 first_el2_jump_msg:
     .asciz "[AXIOM] : [EL2]: EL3 eret into EL2\n"
 
