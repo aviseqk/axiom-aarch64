@@ -162,13 +162,14 @@ zero_bss:
 end_zero_bss:
 	bl axiom_main
 
-	bl axiom_enter_el2
+	bl prepare_axiom_enter_el2
 
-1:	
-	b 1b
+	// transition into EL2
+	eret
+
 
 /* prepare the exception return and context for CPU to jump to EL2 and do ERET */
-axiom_enter_el2:
+prepare_axiom_enter_el2:
 	// prepare EL2's stack
 	ldr x0, =AXIOM_EL2_STACK_TOP
 	msr SP_EL2, x0
@@ -207,5 +208,4 @@ axiom_enter_el2:
 	ldr x0, =AXIOM_EL2_ENTRY
 	msr ELR_EL3, x0
 
-	// Transition
-	eret
+	ret
