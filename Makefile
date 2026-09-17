@@ -31,7 +31,11 @@ AXIOM_BINARY	:= $(BUILD)/axiom.bin
 EL2_EL3_HANDOFF_HEADER	:= include/generated/el2-build-layout.h
 EL2_MAKE_TARGET		:= el2
 
-.PHONY: all clean
+.PHONY: all clean rebuild
+
+rebuild:
+	make clean
+	make all
 
 all : $(AXIOM_BINARY)
 	@echo "[BUILD]	$<"
@@ -73,9 +77,7 @@ $(BUILD)/pl011-uart.o: drivers/pl011-uart/pl011-uart.c
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-
-
-clean: el2_clean
+clean: el2_clean el1_clean
 	@echo "[CLEAN]	build"
 	rm -rf $(BUILD)/*
 
@@ -84,6 +86,8 @@ clean: el2_clean
 EL2_ELF			:= $(BUILD)/el2.elf
 EL2_BINARY		:= $(BUILD)/el2.bin
 EL2_LINKER_SCRIPT	:= linker.el2.ld
+
+EL1_MAKE_TARGET		:= el1
 
 # NOTE: added the $(BUILD)/console.o $(BUILD)/pl011-uart.o to add links to the console and uart driver so that it could be used to print logs
 EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
@@ -94,6 +98,7 @@ EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
 		   $(BUILD)/el2_exceptions.o
 
 EL2_CTX_C_ASM_OFFS_HEADER	:=	generated/axiom-exception-ctx-offset.h
+EL1_EL2_HANDOFF_HEADER	:= include/generated/el1-build-layout.h
 
 # NOTE: right now, EL2 elf is being explicitly built as a target to be then manually loaded via qemu at designated address in memory
 
@@ -104,13 +109,13 @@ $(EL2_BINARY): $(EL2_ELF)
 	@echo "[OBJCOPY] $@"
 	$(OBJCOPY) -O binary $< $@
 
-$(EL2_ELF): $(BUILD)/linker.el2.i $(EL2_OBJS)
+$(EL2_ELF): $(EL1_MAKE_TARGET) $(EL1_EL2_HANDOFF_HEADER) $(BUILD)/linker.el2.i $(EL2_OBJS)
 	@echo "[LD]	$@"
 	$(LD) $(LDFLAGS) -T $(BUILD)/linker.el2.i -o $@ $(EL2_OBJS)
 
 $(EL2_EL3_HANDOFF_HEADER): $(EL2_ELF)
 	@echo "[TOOL]	$@"
-	./tools/generate-el2-symbols.sh $<
+	./tools/generate-elf-symbols.sh el2 $<
 
 # preprocess the linker script so that macros from platform and memory headers are resolved
 $(BUILD)/linker.el2.i: $(EL2_LINKER_SCRIPT) $(LINKER_SCRIPT_DEPS)
@@ -135,6 +140,55 @@ $(BUILD)/el2_exceptions.o: runtime/el2_exceptions.c
 
 $(EL2_CTX_C_ASM_OFFS_HEADER): 
 	./tools/generate-axiom-exception-ctx-offsets.o
+
 el2_clean:
 	@echo "[CLEAN] build - EL2"
 	rm -rf $(BUILD)/linker.el2.i $(BUILD)/el2* level2_exceptions.o $(EL2_EL3_HANDOFF_HEADER) $(EL2_CTX_C_ASM_OFFS_HEADER)
+
+# EL1 Build Steps
+
+EL1_ELF			:= $(BUILD)/el1.elf
+EL1_BINARY		:= $(BUILD)/el1.bin
+EL1_LINKER_SCRIPT	:= linker.el1.ld
+
+EL1_OBJS		:= $(BUILD)/el1.o \
+			   $(BUILD)/level3_exceptions.o \
+			   $(BUILD)/console.o \
+			   $(BUILD)/pl011-uart.o \
+			   $(BUILD)/el1_main.o
+
+el1: $(EL1_BINARY) 
+	@echo "[BUILD]	$<"
+
+$(EL1_BINARY): $(EL1_ELF)
+	@echo "[OBJCOPY] $@"
+	$(OBJCOPY) -O binary $< $@
+
+$(EL1_ELF) : $(BUILD)/linker.el1.i $(EL1_OBJS)
+	@echo "[LD]	$@"
+	$(LD) $(LDFLAGS) -T $(BUILD)/linker.el1.i -o $@ $(EL1_OBJS)
+
+$(EL1_EL2_HANDOFF_HEADER): $(EL1_ELF)
+	@echo "[TOOL]	$@"
+	./tools/generate-elf-symbols.sh el1 $<
+
+# preprocess the linker script so that macros from platform and memory headers are resolved
+$(BUILD)/linker.el1.i: $(EL1_LINKER_SCRIPT) $(LINKER_SCRIPT_DEPS)
+	@echo "[CPP]	linker.el1.i"
+	$(CC) -E -P -x c $(CPPFLAGS) $< -o $@
+
+$(BUILD)/el1.o: arch/aarch64/el1.S
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+$(BUILD)/level3_exceptions.o: arch/aarch64/level3_exceptions.S
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/el1_main.o: arch/aarch64/el1_main.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+el1_clean:
+	@echo "[CLEAN] build - EL1"
+	rm -rf $(BUILD)/linker.el1.i $(BUILD)/el1* $(BUILD)/level3_exceptions.o $(EL1_EL2_HANDOFF_HEADER)

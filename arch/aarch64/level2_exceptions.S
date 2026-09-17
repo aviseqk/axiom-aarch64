@@ -61,6 +61,10 @@
 el2_sync_exception_log:
     .asciz "[EL2]: synchronous exception\n"
 
+.section .rodata
+el2_sync_lowerel_log:
+    .asciz "[EL2]: synchronous exception from lower EL ig EL1 \n"
+
 /* Exception Handlers used by Axiom at Level 2 in EL2 */
 
 .section .vectors, "ax"
@@ -132,6 +136,18 @@ el2_vector_table:
 .section .text.exceptions, "ax"
 
 el2_sync_entry:
+	cmp x0, #SYNC_EXCEPTION_AARCH64		// if an HVC call?
+	b.ne not_lower_el_sync
+
+	// TODO: The reason why I have not yet introduced the context mechanism in this path,  saving and restoring registers
+	// because that would be heavily driven by HVC service ABI, when it is implemented right. Also EL1 never sees this exception, so EL1 cant save it.
+	
+	ldr x0, =el2_sync_lowerel_log
+	bl console_puts
+
+	eret
+
+not_lower_el_sync:
 	
 	ldr x0, =el2_sync_exception_log
 	bl console_puts
