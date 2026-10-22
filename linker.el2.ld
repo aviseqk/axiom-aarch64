@@ -55,6 +55,15 @@ SECTIONS
 		__el2_stack_top = .;
 	} > EL2_DRAM
 
+	.translation_tables (NOLOAD) : ALIGN(4096)
+	{
+		__el2_translation_tables_start = .;
+
+		KEEP(*(.translation_tables))
+
+		__el2_translation_tables_end = .;
+	} > EL2_DRAM
+
 	__el2_image_end = .;
 
 	ASSERT(__el2_data_load == __el2_data_start,
@@ -65,9 +74,16 @@ SECTIONS
 
 	ASSERT(__el2_vector_table_end - __el2_vector_table_start == 0x800,
 		"Axiom EL2 Vector Table is not 2KiB in size")
+	
+	ASSERT(__el2_translation_tables_start % 4096 == 0,
+		"Axiom EL2 translation tables are not 4KiB aligned")
+
+	ASSERT(__el2_translation_tables_end - __el2_translation_tables_start == 0x8000,
+		"Axiom EL2 translation tables are not 32KiB in size, for this setup")
 
 	ASSERT(__el2_image_end <= AXIOM_EL2_BASE + AXIOM_EL2_SIZE,
 		"Axiom EL2 DRAM Memory Allocation Overflow")
+
 }
 
 /* EL2 -> EL3 handoff ABI */
