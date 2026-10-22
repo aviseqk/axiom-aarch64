@@ -5,7 +5,7 @@
 #define AXIOM_EL2_LAYOUT_H
 
 #define AXIOM_EL2_ENTRY                  0x40100000
-#define AXIOM_EL2_STACK_TOP              0x40105110
+#define AXIOM_EL2_STACK_TOP              0x40105130
 #define AXIOM_EL2_VECTOR_BASE            0x40100800
 
 #endif /* AXIOM_EL2_LAYOUT_H */

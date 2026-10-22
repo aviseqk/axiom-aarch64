@@ -1,5 +1,5 @@
-#ifndef axiom_console_h
-#define axiom_console_h
+#ifndef AXIOM_CONSOLE_H
+#define AXIOM_CONSOLE_H
 
 #ifndef __ASSEMBLER__
 
