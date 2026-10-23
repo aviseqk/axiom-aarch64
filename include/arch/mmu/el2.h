@@ -40,6 +40,39 @@
 #define DESC_OA_MASK		(0x0000FFFFFFFFF000ULL)
 
 
+/* MAIR byte encodings */
+/* our descriptor MAIR attributes set up
+ *    Attr0 - Normal Memory, Inner/Outer Write-back, Read/Write 
+ *    Attr1 - Device-nGnRE 
+ *
+ *    hence, Normal WB-> OxFF, and Device-nGnRE -> 0x04 
+ *    so, MAIR_EL2 value becomes 0x04FF (describing both attributes of the descriptor as index to MAIR)
+ *    */
+#define AXIOM_MAIR_EL2_VALUE	0x00000000000004FFULL
+
+
+/* TCR_EL2 register setup
+ * 4KiB granule, 48-bit OA, 48-bit VA/PA
+ *
+ *    TOSZ : [5:0] = 16
+ *    IRGN0 : [9:8] = 01  → Inner WB/WA
+ *    ORGN0 : [11:10] = 01  → Outer WB/WA
+ *    SH0 : [13:12] = 11 → Inner Shareable
+ *    TG0 : [15:14] = 0 (4KiB Granule)
+ *    PS : [18:16] = 101 (48-bit PA)
+ *    TBI : [20] = 0 (no decision about address tagging - top byte ignoring or otherwise)
+ *
+ *    RESULTANT TCR_EL2 for this setup: 0x053510
+ *
+ * */
+#define AXIOM_TCR_EL2_VALUE	0x0000000000053510ULL
+
+#ifndef __ASSEMBLER__
+
 void el2_build_translation_tables(void);
+
+void el2_enable_mmu(void);
+
+#endif
 
 #endif
