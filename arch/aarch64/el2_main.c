@@ -15,4 +15,11 @@ void el2_main(void)
 	el2_build_translation_tables();
 
 	console_puts("[EL2]: translation tables built\n");
+
+	el2_enable_mmu();
+
+	console_puts("[EL2]: MMU enabled\n");
+
 }
+
+

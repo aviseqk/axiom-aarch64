@@ -1,5 +1,6 @@
 #include "arch/el2.h"
 #include "arch/el1.h"
+#include "arch/mmu/el2.h"
 #include "generated/el1-build-layout.h"
 
 
@@ -66,6 +67,33 @@ end_zero_bss:
 
 	eret
 
+
+.globl el2_enable_mmu
+.type el2_enable_mmu, %function
+
+el2_enable_mmu:
+	// programming the EL2 Stage-1 translation regime
+	mov_imm x0, AXIOM_MAIR_EL2_VALUE
+	msr MAIR_EL2, x0
+
+	mov_imm x0, AXIOM_TCR_EL2_VALUE
+	msr TCR_EL2, x0
+	
+	// TTBR0_EL2 = physical address of the L0 root table
+	ldr x0, =el2_l0
+	msr TTBR0_EL2, x0
+
+	dsb sy
+	isb
+
+	// enable stage-1 mmu
+	mrs     x0, SCTLR_EL2
+	orr     x0, x0, #SCTLR_M_BIT
+	msr     SCTLR_EL2, x0
+
+	isb
+
+	ret
 
 
 /* prepare the exception return and context for CPU to jump to EL1 */
