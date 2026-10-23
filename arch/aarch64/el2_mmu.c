@@ -160,6 +160,9 @@ void el2_build_translation_tables(void)
 		el2_l3_ram1[i] = make_normal_rw_x_desc(pa);
 	}
 
+	// TODO: for the el2_va_pa_translation alias test, REMOVE post confirmation
+	el2_l3_ram1[496] = make_normal_rw_x_desc(0x40400000);
+
 	/* 0x4040_0000 - 0x405F_FFFF => 3rd L3 table - from idx 0 to 512 in el2_l3_ram2 table */
 	for (uint64_t i = 0; i < 256; ++i) {
 		uint64_t pa = EL2_RAM_L3_2_BASE + (i * 0x1000ULL);
