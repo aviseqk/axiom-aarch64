@@ -60,7 +60,7 @@
  *    SH0 : [13:12] = 11 → Inner Shareable
  *    TG0 : [15:14] = 0 (4KiB Granule)
  *    PS : [18:16] = 101 (48-bit PA)
- *    TBI : [20] = 0 (no decision about address tagging - top byte ignoring or otherwise)
+ *    TBI : [20] = 0 Top Byte included in calculation, no decision about address tagging
  *
  *    RESULTANT TCR_EL2 for this setup: 0x053510
  *
@@ -68,6 +68,30 @@
 #define AXIOM_TCR_EL2_VALUE	0x0000000000053510ULL
 
 #ifndef __ASSEMBLER__
+
+#include <stdint.h>
+#include <stdbool.h>
+
+enum el2_mem_type {
+    EL2_MEM_NORMAL,
+    EL2_MEM_DEVICE,
+};
+
+enum el2_mem_perm {
+    EL2_MEM_RO,
+    EL2_MEM_RW,
+};
+
+struct el2_memory_region {
+    uintptr_t start;
+    uintptr_t end;
+
+    enum el2_mem_type type;
+    enum el2_mem_perm perm;
+
+    bool executable;
+    bool inner_shareable;
+};
 
 void el2_build_translation_tables(void);
 
