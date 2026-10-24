@@ -20,3 +20,15 @@ void console_puts(const char *s)
 		console_putc(*s++);
 	}
 }
+
+void console_put_hex64(uint64_t value)
+{
+	static const char hex[] = "0123456789abcdef";
+
+	console_puts("0x");
+	for (int i = 15; i >=0; i-- ) {
+		uint8_t nibble = (value >> (i * 4)) & 0xf;
+
+		console_putc(hex[nibble]);
+	}
+}
