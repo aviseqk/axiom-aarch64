@@ -13,25 +13,35 @@ SECTIONS
 {
 	. = AXIOM_EL2_BASE;
 
-	.text : ALIGN(4)
+	.text : ALIGN(4096)
 	{
+		__el2_text_start = .;
 		KEEP(*(.text.boot))
 		*(.text*)
+		__el2_text_end = .;
 	} > EL2_DRAM
 
-	.vectors : ALIGN(2048)
+	.vectors : ALIGN(4096)
 	{
 		__el2_vector_table_start = .;
 		KEEP(*(.vectors))
 		__el2_vector_table_end = .;
 	} > EL2_DRAM
 
-	.rodata : ALIGN(8)
+	.rodata : ALIGN(4096)
 	{
+		__el2_rodata_start = .;
 		*(.rodata*)
+		__el2_rodata_end = .;
 	} > EL2_DRAM
-
-	.data : ALIGN(8)
+	
+	/* TODO: Page boundaries are needed only when the MMU policy changes,
+	 * so in theory we could have the page-granular boundary alignment being 
+	 * shared between similar ELF sections like .data, .bss, and .stack instead
+	 * of each of those sections being 4KiB page-aligned we could have the whole
+	 * of it as a contiguous section and page-aligned
+	 * */
+	.data : ALIGN(4096)
 	{
 		__el2_data_start = .;
 		*(.data*)
@@ -40,7 +50,7 @@ SECTIONS
 
 	__el2_data_load = LOADADDR(.data);
 
-	.bss (NOLOAD) : ALIGN(8)
+	.bss (NOLOAD) : ALIGN(4096)
 	{
 		__el2_bss_start = .;
 		*(.bss*)
@@ -48,7 +58,7 @@ SECTIONS
 		__el2_bss_end = .;
 	} > EL2_DRAM
 
-	.stack (NOLOAD) : ALIGN(16)
+	.stack (NOLOAD) : ALIGN(4096)
 	{
 		__el2_stack_bottom = .;
 		. += AXIOM_EL2_STACK_SIZE;
