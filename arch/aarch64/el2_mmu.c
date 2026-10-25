@@ -246,16 +246,6 @@ static const struct el2_memory_region el2_regions[] = {
 		.executable = false,
 		.inner_shareable = true,
 	},
-	// NOTE: The physical page at 0x40400000 exists after adding it as a memory region,
-	// and allowing me to explicitly map one VA to it so that alias experiment does not fault on access
-	{
-		.start = 0x40400000,
-		.end = 0x40401000,
-		.type = EL2_MEM_NORMAL,
-		.perm = EL2_MEM_RW,
-		.executable = false,
-		.inner_shareable = true,
-	},
 };
 
 #define EL2_REGION_COUNT \
@@ -337,6 +327,39 @@ static void el2_map_region(const struct el2_memory_region *region)
 
 }
 
+int el2_map_page(uintptr_t va,
+		uintptr_t pa, 
+		enum el2_mem_type type, 
+		enum el2_mem_perm perm, 
+		bool executable,
+		bool inner_shareable)	
+{
+	struct el2_memory_region region = {
+		.start = va,
+		.end = va + EL2_PAGE_SIZE,
+		.type = type,
+		.perm = perm,
+		.executable = executable,
+		.inner_shareable = inner_shareable
+	};
+
+	uint64_t desc;
+
+	if (((va & EL2_PAGE_MASK) != 0) || 
+			((pa & EL2_PAGE_MASK) != 0))
+		return -1;
+
+	desc = el2_region_to_page_desc(&region, pa);
+
+	if (desc == 0)
+		return -1;
+
+	el2_install_l3_page(va, desc);
+
+	return 0;
+}
+
+
 static inline uint64_t make_table_desc(uint64_t table_pa)
 {
 	uint64_t desc = 0;
@@ -404,10 +427,5 @@ void el2_build_translation_tables(void)
 	for (size_t i = 0; i < EL2_REGION_COUNT; i++){
 		el2_map_region(&el2_regions[i]);
 	}
-
-	// TODO: for the el2_va_pa_translation alias test, REMOVE post confirmation
-	uint64_t desc = make_normal_rw_xn_desc(0x40400000);
-
-	el2_install_l3_page(0x403F0000, desc);
 
 }

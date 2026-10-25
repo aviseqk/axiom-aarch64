@@ -97,6 +97,12 @@ void el2_build_translation_tables(void);
 
 void el2_enable_mmu(void);
 
+int el2_map_page(uintptr_t va,
+	uintptr_t pa, enum el2_mem_type type,
+	enum el2_mem_perm perm, 
+	bool executable,
+	bool inner_shareable);
+
 #endif
 
 #endif
