@@ -95,6 +95,7 @@ EL2_OBJS	:= $(BUILD)/level2_exceptions.o \
 		   $(BUILD)/console.o \
 		   $(BUILD)/pl011-uart.o \
 		   $(BUILD)/el2_main.o \
+		   $(BUILD)/el2_mmu.o \
 		   $(BUILD)/el2_exceptions.o
 
 EL2_CTX_C_ASM_OFFS_HEADER	:=	generated/axiom-exception-ctx-offset.h
@@ -122,6 +123,10 @@ $(BUILD)/linker.el2.i: $(EL2_LINKER_SCRIPT) $(LINKER_SCRIPT_DEPS)
 	@echo "[CPP]	linker.el2.ld"
 	$(CC) -E -P -x c $(CPPFLAGS) $< -o $@
 
+$(BUILD)/el2_mmu.o: arch/aarch64/el2_mmu.c
+	@echo "[CC]	$<"
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
 $(BUILD)/el2_main.o: arch/aarch64/el2_main.c
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -137,6 +142,7 @@ $(BUILD)/level2_exceptions.o: arch/aarch64/level2_exceptions.S $(EL2_CTX_C_ASM_O
 $(BUILD)/el2_exceptions.o: runtime/el2_exceptions.c
 	@echo "[CC]	$<"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
 
 $(EL2_CTX_C_ASM_OFFS_HEADER): 
 	./tools/generate-axiom-exception-ctx-offsets.o
