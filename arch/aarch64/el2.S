@@ -59,6 +59,7 @@ end_zero_bss:
 	ldr x0, =first_el2_jump_msg
 	bl console_puts
 
+	// NOTE: remove this test hook because, for when I removed elr+=4 exception recovery logic 
 	udf_inst_exception_test_hook
 
 	bl el2_main
